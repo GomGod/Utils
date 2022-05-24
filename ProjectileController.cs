@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using UnityEngine;
 
+//2D상의 투사체 움직임을 컨트롤하기 위해 사용하는 클래스
 public class ProjectileController : MonoBehaviour
 {
     [Header("Fly Ease Curve - 0~1f, progress")] [SerializeField]
