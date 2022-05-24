@@ -43,13 +43,5 @@ namespace _01_Scripts.General
                 }
             }
         }
-        private void OnApplicationQuit()
-        {
-            //shuttingDown = true;
-        }
-        private void OnDestroy()
-        {
-            //shuttingDown = true;
-        }
     }
 }
