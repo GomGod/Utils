@@ -10,7 +10,7 @@ namespace _01_Scripts.General
         private class FloatComparer : IEqualityComparer<float>
         {
             // ReSharper disable once CompareOfFloatsByEqualityOperator
-            bool IEqualityComparer<float>.Equals(float x, float y) => (x - y) < 0.01f && (x-y) > -0.01f;
+            bool IEqualityComparer<float>.Equals(float x, float y) => x==y;
             int IEqualityComparer<float>.GetHashCode(float x) => x.GetHashCode();
         }
 
