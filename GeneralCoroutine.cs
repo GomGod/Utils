@@ -18,7 +18,8 @@ namespace _01_Scripts.General
 
         private static readonly Dictionary<float, WaitForSecondsRealtime> DictionaryWaitTimerRealTimes =
             new Dictionary<float, WaitForSecondsRealtime>(new FloatComparer());
-private static float threshold = 0.01f;
+
+        private static float threshold = 0.01f;
 
         /// <summary>
         /// 타이머의 정밀도를 조정합니다.
