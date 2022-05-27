@@ -18,7 +18,15 @@ namespace _01_Scripts.General
 
         private static readonly Dictionary<float, WaitForSecondsRealtime> DictionaryWaitTimerRealTimes =
             new Dictionary<float, WaitForSecondsRealtime>(new FloatComparer());
+private static float threshold = 0.01f;
 
+        /// <summary>
+        /// 타이머의 정밀도를 조정합니다.
+        /// value 값은 float의 어떤 값이든 올 수 있지만, 10의 제곱 값을 사용하지 않으면 정상적으로 동작하지 않을 수 있습니다.
+        /// ex) value = 0.01 => 소수 두 번째 자리 아래로 버림
+        /// </summary>
+        /// <param name="value"> 정밀도(10의 제곱 값(음수 포함)) </param>
+        public static void SetTimerThreshold(float value) => threshold = value;
 
         /// <summary>
         /// duration 값으로 지정한 WaitForSeconds를 리턴 <br/>
@@ -28,11 +36,13 @@ namespace _01_Scripts.General
         /// <returns>WaitForSeconds(duration)</returns>
         public static WaitForSeconds WaitTimer(float duration)
         {
-            if (DictionaryWaitTimer.TryGetValue(duration, out var timer)) 
+            var adjustedDuration = duration - duration % 0.01f;
+            
+            if (DictionaryWaitTimer.TryGetValue(adjustedDuration, out var timer)) 
                 return timer;
             
-            timer = new WaitForSeconds(duration);
-            DictionaryWaitTimer.Add(duration, timer);
+            timer = new WaitForSeconds(adjustedDuration);
+            DictionaryWaitTimer.Add(adjustedDuration, timer);
             return timer;
         }
         
@@ -44,11 +54,13 @@ namespace _01_Scripts.General
         /// <returns>WaitForSecondsRealTime(duration)</returns>
         public static WaitForSecondsRealtime WaitTimerInRealTime(float duration)
         {
-            if (DictionaryWaitTimerRealTimes.TryGetValue(duration, out var timer))
+            var adjustedDuration = duration - duration % 0.01f;
+            
+            if (DictionaryWaitTimerRealTimes.TryGetValue(adjustedDuration, out var timer))
                 return timer;
 
-            timer = new WaitForSecondsRealtime(duration);
-            DictionaryWaitTimerRealTimes.Add(duration, timer);
+            timer = new WaitForSecondsRealtime(adjustedDuration);
+            DictionaryWaitTimerRealTimes.Add(adjustedDuration, timer);
             return timer;
         }
 
