@@ -54,90 +54,98 @@ public class ProjectileController : MonoBehaviour
         InitializeBulletMovement(flyTime, false);
     }
 
-    private void InitializeBulletMovement(float flyTime, bool isTargeting)
-    {
-        if (isTargeting)
+private void InitializeBulletMovement(float flyTime, bool isTargeting)
         {
-            StartCoroutine(UpdateTargetMove(targetTransform, flyTime));
-        }
-
-        if (destroyParticleObject)
-            destroyParticleObject.SetActive(false);
-        bulletImageObject.SetActive(true);
-
-        StartCoroutine(UpdateXAxisMove(flyTime));
-        StartCoroutine(UpdateYAxisOffset(flyTime));
-        StartCoroutine(UpdateRotate(flyTime));
-    }
-
-    private IEnumerator UpdateRotate(float duration)
-    {
-        var timer = 0.0f;
-        var thisTransform = transform;
-        while (timer <= duration)
-        {
-            if (isSeperatedDirAndRot)
+            if (isTargeting)
             {
-                //투사체의 진행방향과 회전이 독립인 경우, 커브의 제어를 받음
-                var rotationValue = rotateCurve.Evaluate(timer / duration) * 360f;
-                thisTransform.rotation = Quaternion.Euler(0f, 0f, rotationValue);
+                StartCoroutine(UpdateTargetMove(target.transform, flyTime));
             }
-            else
+            if(destroyParticleObject)
+                destroyParticleObject.SetActive(false);
+            bulletImageObject.SetActive(true);
+            
+            StartCoroutine(UpdateXAxisMove(flyTime));
+            StartCoroutine(UpdateYAxisOffset(flyTime));
+            StartCoroutine(UpdateRotate(flyTime));
+        }
+
+        private Vector3 prevPosition = new Vector3();
+        private IEnumerator UpdateRotate(float duration)
+        {
+            var timer = 0.0f;
+            var thisTransform = transform;
+            while (timer <= duration)
             {
-                var rotationValue = Quaternion.LookRotation(destPos - thisTransform.position);
-                thisTransform.rotation = rotationValue;
+                if (isSeperatedDirAndRot)
+                {//투사체의 진행방향과 회전이 독립인 경우, 커브의 제어를 받음
+                    var rotationValue = rotateCurve.Evaluate(timer / duration) * 360f;
+                    rotationValue += isFromRight ? 180.0f : 0.0f;
+                    thisTransform.rotation = Quaternion.Euler(0f, 0f, rotationValue);
+                }
+                else
+                {
+                    var thisTransformPos = thisTransform.position;
+                    var vectorToTarget = prevPosition - thisTransformPos;
+                    vectorToTarget *= isFromRight ? -1 : 1;
+                    var quaternionToTarget = Quaternion.Euler(0, 0, 90) * vectorToTarget;
+                    var targetRotation = Quaternion.LookRotation(forward: Vector3.forward, upwards: quaternionToTarget);
+                    thisTransform.rotation = targetRotation;
+                    prevPosition = thisTransformPos;
+                }
+                
+                timer += Time.unscaledDeltaTime *TimeScaleController.Instance.GetCurrentTimeScale().Item1;
+                yield return null;
             }
-
-            timer += Time.deltaTime;
-            yield return null;
         }
-    }
-
-    private IEnumerator UpdateXAxisMove(float duration)
-    {
-        var timer = 0.0f;
-        while (timer <= duration)
+        
+        private IEnumerator UpdateXAxisMove(float duration)
         {
-            var evaluatedValue = flyEaseCurve.Evaluate(timer / duration);
-            var newPosition = Vector3.Lerp(initPosition, destPos, evaluatedValue);
-
-            transform.position = newPosition;
-            onUpdate?.Invoke(this);
-            timer += Time.deltaTime;
-            yield return null;
+            var thisTransform = transform;
+            var timer = 0.0f;
+            while (timer <= duration)
+            {
+                var evaluatedValue = DOVirtual.EasedValue(0f, 1f, timer/duration, flyEaseCurve);
+                var newPosition = Vector3.Lerp(initPosition, destPos, evaluatedValue);
+                
+                thisTransform.position = newPosition;
+                
+                onUpdate?.Invoke(this);
+                timer += Time.unscaledDeltaTime * TimeScaleController.Instance.GetCurrentTimeScale().Item1;
+                yield return null;
+            }
+            DestroyBullet();
         }
-
-        DestroyBullet();
-    }
-
-    private IEnumerator UpdateYAxisOffset(float duration)
-    {
-        var timer = 0.0f;
-        var thisTransform = transform;
-
-        while (timer <= duration)
+ 
+        private IEnumerator UpdateYAxisOffset(float duration)
         {
-            var referenceAxisVector = destPos - initPosition;
-            var yAxisVector = Vector3.Cross(new Vector3(0, 0, 1), referenceAxisVector).normalized; //y축 벡터
-            var evaluatedYOffset = yAxisOffsetCurve.Evaluate(timer / duration);
-            var moveOffset = yAxisVector * evaluatedYOffset;
+            var timer = 0.0f;
+            var thisTransform = transform;
 
-            thisTransform.localPosition += moveOffset;
-            timer += Time.deltaTime;
-            yield return null;
+            while (timer <= duration)
+            {
+                var referenceAxisVector = destPos - initPosition;
+                referenceAxisVector *= isFromRight ? -1.0f : 1.0f;
+                
+                var yAxisVector = Vector3.Cross(new Vector3(0, 0, 1),referenceAxisVector ).normalized; //y축 벡터
+                var evaluatedYOffset = yAxisOffsetCurve.Evaluate(timer / duration);
+                var moveOffset = yAxisVector * evaluatedYOffset;
+                
+                thisTransform.localPosition += moveOffset;
+                timer += Time.unscaledDeltaTime *TimeScaleController.Instance.GetCurrentTimeScale().Item1;
+                yield return null;
+            }
         }
-    }
-
-    private IEnumerator UpdateTargetMove(Transform destTransform, float duration)
-    {
-        var timer = 0.0f;
-        while (timer <= duration)
+        
+        private IEnumerator UpdateTargetMove(Transform destTransform, float duration)
         {
-            destPos = destTransform.position;
-            timer += Time.deltaTime;
-            yield return null;
+            var timer = 0.0f;
+            while (timer <= duration)
+            {
+                destPos = destTransform.position;
+                timer += Time.unscaledDeltaTime * TimeScaleController.Instance.GetCurrentTimeScale().Item1;
+                yield return null;
+            }
         }
-    }
 
     private void DestroyBullet()
     {
