@@ -1,3 +1,5 @@
+// Serializable Dictionary => https://uwostudy.tistory.com/84 참조
+
 using System.Collections.Generic;
 using _01_Scripts.General;
 using _01_Scripts.General.Utils;
